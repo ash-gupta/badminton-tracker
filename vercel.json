@@ -1,10 +1,8 @@
 {
   "name": "badminton-tracker",
   "version": 2,
-  "public": true,
-  "github": {
-    "silent": true
-  },
+  "buildCommand": "echo 'Static site - no build needed'",
+  "outputDirectory": ".",
   "rewrites": [
     {
       "source": "/(.*)",
