@@ -1,0 +1,12 @@
+{
+  "name": "badminton-tracker",
+  "version": "1.0.0",
+  "description": "TrueSkill badminton tracking app",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "build": "echo 'Nothing to build - static HTML'"
+  },
+  "keywords": ["badminton", "tracker", "trueskill"],
+  "author": "Ash Gupta"
+}
