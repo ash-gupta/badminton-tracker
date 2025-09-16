@@ -459,9 +459,10 @@
 
         // JSONBin Configuration
         const JSONBIN_CONFIG = {
-            binId: '68c8fa8443b1c97be9448bee', // Replace with your actual Bin ID
-            apiKey: '$2a$10$16lhtBclc17Ihw4xeliVJuFDkjfRd4hTgdlUM7go6vCcMRcUGZXEm', // Replace with your actual API Key
-            baseUrl: 'https://api.jsonbin.io/v3'
+            binId: '68c8fa8443b1c97be9448bee', // Your correct Bin ID
+            apiKey: '$2a$10$16lhtBclc17Ihw4xeliVJuFDkjfRd4hTgdlUM7go6vCcMRcUGZXEm', // Your X-ACCESS-KEY
+            baseUrl: 'https://api.jsonbin.io/v3',
+            version: 'v3'
         };
 
         // Data storage
@@ -480,7 +481,7 @@
                     const response = await fetch(`${JSONBIN_CONFIG.baseUrl}/b/${JSONBIN_CONFIG.binId}/latest`, {
                         method: 'GET',
                         headers: {
-                            'X-Master-Key': JSONBIN_CONFIG.apiKey
+                            'X-Access-Key': JSONBIN_CONFIG.apiKey
                         }
                     });
                     
@@ -518,7 +519,8 @@
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-Master-Key': JSONBIN_CONFIG.apiKey
+                            'X-Access-Key': JSONBIN_CONFIG.apiKey,
+                            'X-Bin-Meta': 'false'
                         },
                         body: JSON.stringify(gameData)
                     });
@@ -530,7 +532,12 @@
                         throw new Error(`HTTP ${response.status}`);
                     }
                 } catch (error) {
-                    console.log('⚠️ Cloud save failed:', error.message);
+                    console.error('⚠️ Cloud save failed:', error);
+                    console.error('Config check:', {
+                        binId: JSONBIN_CONFIG.binId,
+                        hasApiKey: !!JSONBIN_CONFIG.apiKey,
+                        apiKeyPrefix: JSONBIN_CONFIG.apiKey.substring(0, 10) + '...'
+                    });
                     showSyncMessage('Sync failed - saved locally ⚠️');
                 }
             } else if (JSONBIN_CONFIG.binId === 'YOUR_BIN_ID_HERE') {
