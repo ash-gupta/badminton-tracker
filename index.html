@@ -460,7 +460,7 @@
         // JSONBin Configuration
         const JSONBIN_CONFIG = {
             binId: '68c8fa8443b1c97be9448bee', // Replace with your actual Bin ID
-            apiKey: '$2a$10$DHPX/kuE42uL.1hkZQAYSu5kXo18F9kn2/DmBsy8tkQCO.V7EMxx2', // Replace with your actual API Key
+            apiKey: '$2a$10$16lhtBclc17Ihw4xeliVJuFDkjfRd4hTgdlUM7go6vCcMRcUGZXEm', // Replace with your actual API Key
             baseUrl: 'https://api.jsonbin.io/v3'
         };
 
@@ -513,6 +513,7 @@
             // Try to save to cloud
             if (isOnline && JSONBIN_CONFIG.binId !== 'YOUR_BIN_ID_HERE') {
                 try {
+                    console.log('🔄 Syncing to cloud...');
                     const response = await fetch(`${JSONBIN_CONFIG.baseUrl}/b/${JSONBIN_CONFIG.binId}`, {
                         method: 'PUT',
                         headers: {
@@ -524,13 +525,17 @@
                     
                     if (response.ok) {
                         console.log('☁️ Data synced to cloud');
+                        showSyncMessage('Synced to cloud ✅');
                     } else {
-                        throw new Error('Cloud save failed');
+                        throw new Error(`HTTP ${response.status}`);
                     }
                 } catch (error) {
                     console.log('⚠️ Cloud save failed:', error.message);
-                    // Could implement retry logic here
+                    showSyncMessage('Sync failed - saved locally ⚠️');
                 }
+            } else if (JSONBIN_CONFIG.binId === 'YOUR_BIN_ID_HERE') {
+                console.log('📱 JSONBin not configured - using local storage only');
+                showSyncMessage('Local only - no cloud sync');
             }
         }
 
@@ -553,16 +558,27 @@
             const indicator = document.getElementById('syncIndicator');
             const status = document.getElementById('syncStatus');
             
-            if (isOnline && JSONBIN_CONFIG.binId !== 'YOUR_BIN_ID_HERE') {
-                indicator.textContent = '☁️ Synced';
-                status.className = 'sync-status sync-online';
-            } else if (isOnline) {
-                indicator.textContent = '📱 Local';
-                status.className = 'sync-status sync-offline';
-            } else {
+            if (!isOnline) {
                 indicator.textContent = '📱 Offline';
                 status.className = 'sync-status sync-offline';
+            } else if (JSONBIN_CONFIG.binId === 'YOUR_BIN_ID_HERE') {
+                indicator.textContent = '📱 Local Only';
+                status.className = 'sync-status sync-offline';
+            } else {
+                indicator.textContent = '☁️ Cloud Ready';
+                status.className = 'sync-status sync-online';
             }
+        }
+
+        // Show temporary sync message
+        function showSyncMessage(message) {
+            const indicator = document.getElementById('syncIndicator');
+            const originalText = indicator.textContent;
+            
+            indicator.textContent = message;
+            setTimeout(() => {
+                updateSyncStatus();
+            }, 2000);
         }
 
         // Initialize app
