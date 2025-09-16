@@ -32,6 +32,23 @@
             padding: 20px;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .sync-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .sync-online {
+            color: #90EE90;
+        }
+
+        .sync-offline {
+            color: #FFB6C1;
         }
 
         .header h1 {
@@ -335,6 +352,9 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="sync-status" id="syncStatus">
+                <span id="syncIndicator">🌐 Online</span>
+            </div>
             <h1>🏸 Badminton Tracker</h1>
             <p>TrueSkill Friends Leaderboard</p>
         </div>
@@ -439,8 +459,8 @@
 
         // JSONBin Configuration
         const JSONBIN_CONFIG = {
-            binId: '68c8fa8443b1c97be9448bee',
-            apiKey: '$2a$10$DHPX/kuE42uL.1hkZQAYSu5kXo18F9kn2/DmBsy8tkQCO.V7EMxx2',
+            binId: '68c8fa8443b1c97be9448bee', // Replace with your actual Bin ID
+            apiKey: '$2a$10$DHPX/kuE42uL.1hkZQAYSu5kXo18F9kn2/DmBsy8tkQCO.V7EMxx2', // Replace with your actual API Key
             baseUrl: 'https://api.jsonbin.io/v3'
         };
 
@@ -517,18 +537,38 @@
         // Monitor online status
         window.addEventListener('online', () => {
             isOnline = true;
+            updateSyncStatus();
             console.log('🌐 Back online');
             // Could sync queued changes here
         });
 
         window.addEventListener('offline', () => {
             isOnline = false;
+            updateSyncStatus();
             console.log('📱 Offline mode');
         });
+
+        // Update sync status indicator
+        function updateSyncStatus() {
+            const indicator = document.getElementById('syncIndicator');
+            const status = document.getElementById('syncStatus');
+            
+            if (isOnline && JSONBIN_CONFIG.binId !== 'YOUR_BIN_ID_HERE') {
+                indicator.textContent = '☁️ Synced';
+                status.className = 'sync-status sync-online';
+            } else if (isOnline) {
+                indicator.textContent = '📱 Local';
+                status.className = 'sync-status sync-offline';
+            } else {
+                indicator.textContent = '📱 Offline';
+                status.className = 'sync-status sync-offline';
+            }
+        }
 
         // Initialize app
         async function init() {
             await loadData();
+            updateSyncStatus();
             updateAllSelects();
             updateLeaderboard();
             updateFriendsList();
