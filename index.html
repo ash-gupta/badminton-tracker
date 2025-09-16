@@ -437,28 +437,98 @@
             'Random [Great]': { mu: 35, sigma: 2 }
         };
 
+        // JSONBin Configuration
+        const JSONBIN_CONFIG = {
+            binId: '68c8fa8443b1c97be9448bee',
+            apiKey: '$2a$10$DHPX/kuE42uL.1hkZQAYSu5kXo18F9kn2/DmBsy8tkQCO.V7EMxx2',
+            baseUrl: 'https://api.jsonbin.io/v3'
+        };
+
         // Data storage
         let gameData = {
             friends: {},
             matches: []
         };
 
-        // Load data from localStorage
-        function loadData() {
+        let isOnline = navigator.onLine;
+        let saveQueue = [];
+
+        // Load data from JSONBin with localStorage fallback
+        async function loadData() {
+            try {
+                if (isOnline && JSONBIN_CONFIG.binId !== 'YOUR_BIN_ID_HERE') {
+                    const response = await fetch(`${JSONBIN_CONFIG.baseUrl}/b/${JSONBIN_CONFIG.binId}/latest`, {
+                        method: 'GET',
+                        headers: {
+                            'X-Master-Key': JSONBIN_CONFIG.apiKey
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        gameData = result.record;
+                        // Backup to localStorage
+                        localStorage.setItem('badmintonTracker', JSON.stringify(gameData));
+                        console.log('✅ Data loaded from cloud');
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('⚠️ Cloud load failed, using local data:', error.message);
+            }
+            
+            // Fallback to localStorage
             const stored = localStorage.getItem('badmintonTracker');
             if (stored) {
                 gameData = JSON.parse(stored);
+                console.log('📱 Data loaded from device');
             }
         }
 
-        // Save data to localStorage
-        function saveData() {
+        // Save data to JSONBin with localStorage backup
+        async function saveData() {
+            // Always save locally first (instant)
             localStorage.setItem('badmintonTracker', JSON.stringify(gameData));
+            
+            // Try to save to cloud
+            if (isOnline && JSONBIN_CONFIG.binId !== 'YOUR_BIN_ID_HERE') {
+                try {
+                    const response = await fetch(`${JSONBIN_CONFIG.baseUrl}/b/${JSONBIN_CONFIG.binId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': JSONBIN_CONFIG.apiKey
+                        },
+                        body: JSON.stringify(gameData)
+                    });
+                    
+                    if (response.ok) {
+                        console.log('☁️ Data synced to cloud');
+                    } else {
+                        throw new Error('Cloud save failed');
+                    }
+                } catch (error) {
+                    console.log('⚠️ Cloud save failed:', error.message);
+                    // Could implement retry logic here
+                }
+            }
         }
 
+        // Monitor online status
+        window.addEventListener('online', () => {
+            isOnline = true;
+            console.log('🌐 Back online');
+            // Could sync queued changes here
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            console.log('📱 Offline mode');
+        });
+
         // Initialize app
-        function init() {
-            loadData();
+        async function init() {
+            await loadData();
             updateAllSelects();
             updateLeaderboard();
             updateFriendsList();
@@ -477,7 +547,7 @@
         }
 
         // Add friend
-        function addFriend() {
+        async function addFriend() {
             const name = document.getElementById('newFriend').value.trim();
             if (!name) {
                 alert('Please enter a friend\'s name');
@@ -495,17 +565,17 @@
             };
 
             document.getElementById('newFriend').value = '';
-            saveData();
+            await saveData();
             updateAllSelects();
             updateFriendsList();
             updateLeaderboard();
         }
 
         // Remove friend
-        function removeFriend(name) {
+        async function removeFriend(name) {
             if (confirm(`Are you sure you want to remove ${name}?`)) {
                 delete gameData.friends[name];
-                saveData();
+                await saveData();
                 updateAllSelects();
                 updateFriendsList();
                 updateLeaderboard();
@@ -571,7 +641,7 @@
         }
 
         // Add game
-        function addGame() {
+        async function addGame() {
             const teamA = [
                 document.getElementById('teamA1').value,
                 document.getElementById('teamA2').value
@@ -625,7 +695,7 @@
             document.getElementById('scores').value = '';
             document.querySelectorAll('#game select').forEach(s => s.value = '');
 
-            saveData();
+            await saveData();
             updateLeaderboard();
             updateHistory();
             
